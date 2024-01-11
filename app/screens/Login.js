@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, Button, KeyboardAvoidingView, StyleSheet, ActivityIndicator } from 'react-native';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../FirebaseConfig';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "firebase/auth";
+import { UserContext } from '../../src/contexts/UserContext';
+import { setDoc } from 'firebase/firestore';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const [user, setUser] = useContext(UserContext);
 
     const signIn = async () => {
         setLoading(true);
@@ -22,7 +26,6 @@ export default function Login() {
         setLoading(true);
         try {
             await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
-            await setDoc(doc(FIREBASE_DB, 'users', user.uid), { instance: null })
             alert('Welcome! You successfully signed up for an account.');
         } catch (error) {
             alert('Sign up failed: ' + error.message);

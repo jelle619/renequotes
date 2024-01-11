@@ -1,45 +1,58 @@
-import { View, Text } from 'react-native'
+import { View, Text, FlatList, TextInput, Button } from 'react-native'
 import React, { useState, useContext } from 'react'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, setDoc, getDocs, addDoc, collection, query } from 'firebase/firestore'
 import { FIREBASE_DB } from '../../FirebaseConfig'
-import { UserContext } from '../../App'
+import { InstanceContext } from '../../src/contexts/InstanceContext'
 
+// It is possibly a good idea to divide up this function, the if statement is making it quite long
+export default function Main() {
+    const [instance, setInstance] = useContext(InstanceContext);
+    const [newItem, setNewItem] = useState(null);
 
-export default function Main({ navigation }) {
-
-    const [loading, setLoading] = useState(true);
-    const [instance, setInstance] = useState(null);
-
-    const getInstance = async () => {
-        const user = useContext(UserContext);
-    
-        const userDoc = await getDoc(doc(FIREBASE_DB, "users/" + user.uid));
-        const userData = userDoc.data();
-        const instanceDoc = await getDoc(doc(FIREBASE_DB, "instances/" + userData.instance));
-        const instanceData = instanceDoc.data();
-
-        setInstance(instanceData);
-        setLoading(false);
+    const addNewTask = async() => {
+        await addDoc(collection(FIREBASE_DB, 'instances/' + instance.id + "/tasks"), { title: newItem, inProgress: false, done: false });
+        setNewItem(null);
     }
 
-    getInstance();
+    const fetchTasks = async() => {
+        const tasks = await getDocs(query(collection(FIREBASE_DB, "instance/" + instance.id + "/tasks")));
+        return tasks;
+    }
 
-    if (loading && !instance) {
+    if (instance === undefined) { // instance data is loading
         return (
             <View>
                 <Text>Loading</Text>
             </View>
         )
-    } else if (!loading && !instance) {
+    } else if (instance === null) { // user is in no instance
         return (
             <View>
                 <Text>It looks like you haven't joined an instance yet. Visit the Settings to get started.</Text>
             </View>
         )
-    } else if (!loading && instance) {
+    } else if (instance) { // instance data loaded
+        // console.log(fetchTasks());
         return (
             <View>
                 <Text>You are part of an instance! Amazing!</Text>
+                <FlatList
+                    data={[
+                        { key: 'Devin' },
+                        { key: 'Dan' },
+                        { key: 'Dominic' },
+                        { key: 'Jackson' },
+                        { key: 'James' },
+                        { key: 'Joel' },
+                        { key: 'John' },
+                        { key: 'Jillian' },
+                        { key: 'Jimmy' },
+                        { key: 'Julie' },
+                    ]}
+                    renderItem={({ item }) => <Text>{item.key}</Text>}
+                />
+                <TextInput value={newItem} placeholder="Create new item" autoCapitalize="sentences" onChangeText={(text) => setNewItem(text)}></TextInput>
+                <Button title="Add" onPress={addNewTask}/>
             </View>
         )
     } else {
