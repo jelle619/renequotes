@@ -32,7 +32,7 @@ export default function App() {
         setUser(user);
       }
     })
-  })
+  }, [])
 
   return (
     <UserContext.Provider value={[user, setUser]}>

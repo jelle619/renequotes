@@ -15,8 +15,17 @@ export default function Main() {
     }
 
     const fetchTasks = async() => {
-        const tasks = await getDocs(query(collection(FIREBASE_DB, "instance/" + instance.id + "/tasks")));
-        return tasks;
+        var tasks = [];
+        const document = await getDocs(collection(FIREBASE_DB, "instance/" + instance.id + "/tasks"));
+        console.log(document);
+        document.forEach((doc) => {
+            // doc.data() is never undefined for query doc snapshots
+            console.log(doc);
+            console.log(doc.data());
+            // console.log(doc.id, " => ", doc.data());
+            // tasks.push(doc.data());
+          });
+        // console.log(tasks);
     }
 
     if (instance === undefined) { // instance data is loading
@@ -32,7 +41,7 @@ export default function Main() {
             </View>
         )
     } else if (instance) { // instance data loaded
-        // console.log(fetchTasks());
+        fetchTasks();
         return (
             <View>
                 <Text>You are part of an instance! Amazing!</Text>
