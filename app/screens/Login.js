@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, Button, KeyboardAvoidingView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Button, KeyboardAvoidingView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { FIREBASE_AUTH, FIREBASE_DB } from '../../FirebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "firebase/auth";
 import { UserContext } from '../../src/contexts/UserContext';
@@ -26,7 +26,15 @@ export default function Login() {
         setLoading(true);
         try {
             await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
-            alert('Welcome! You successfully signed up for an account.');
+            Alert.alert(
+                'Sign up successful',
+                'Welcome aboard! You can now use your new account to log in and start using the app.',
+                [
+                    {
+                        text: 'OK',
+                    }
+                ]
+            );
         } catch (error) {
             alert('Sign up failed: ' + error.message);
         } finally {
@@ -38,7 +46,15 @@ export default function Login() {
         setLoading(true);
         try {
             await sendPasswordResetEmail(FIREBASE_AUTH, email);
-            alert('We have sent you an e-mail. Follow the instructions to reset your password.')
+            Alert.alert(
+                'Password request sent',
+                'We have sent you an e-mail. Follow the instructions to reset your password.',
+                [
+                    {
+                        text: 'OK',
+                    }
+                ]
+            );
         } catch (error) {
             alert('Failed to reset password: ' + error.message);
         } finally {

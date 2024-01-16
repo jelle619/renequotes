@@ -16,18 +16,18 @@ export default function Main() {
     const [filterName, setFilterName] = useState("Planned");
 
     const addTask = async () => {
-    if (newItem != null) {
-        setTasks(tasks.concat([{ "status": 0, "title": newItem, "date": new Date() }]))
-        setNewItem(null);
-        try {
-            const document = await addDoc(collection(FIREBASE_DB, 'instances/' + instance.id + "/tasks"), { title: newItem, date: new Date(), status: 0 });
-            setTasks(tasks.concat([{ "id": document.id, "status": 0, "title": newItem, "date": new Date() }]))
-        } catch (error) {
-            alert("Task couldn't be saved to database: " + error)
+        if (newItem != null) {
+            setTasks(tasks.concat([{ "status": 0, "title": newItem, "date": new Date() }]))
+            setNewItem(null);
+            try {
+                const document = await addDoc(collection(FIREBASE_DB, 'instances/' + instance.id + "/tasks"), { title: newItem, date: new Date(), status: 0 });
+                setTasks(tasks.concat([{ "id": document.id, "status": 0, "title": newItem, "date": new Date() }]))
+            } catch (error) {
+                alert("Task couldn't be saved to database: " + error)
+            }
+        } else {
+            alert("Task name cannot be empty.")
         }
-    } else {
-        alert("Task name cannot be empty.")
-    }
     }
 
     const removeTask = async (task) => {
@@ -35,7 +35,7 @@ export default function Main() {
         setTasks(tasks.filter(entry => entry.id !== task.id));
         try {
             await deleteDoc(taskDoc);
-        } catch(error) {
+        } catch (error) {
             alert("Could not remove task from database: " + error)
         }
     }
@@ -45,19 +45,16 @@ export default function Main() {
             'Delete Task',
             "\"" + task.title + "\" will be permanently deleted.",
             [
-              {
-                text: 'Cancel',
-                style: 'cancel'
-              },
-              {
-                text: 'OK',
-                onPress: () => {removeTask(task)}
-              }
-            ],
-            {
-              cancelable: true
-            },
-          );
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                },
+                {
+                    text: 'OK',
+                    onPress: () => { removeTask(task) }
+                }
+            ]
+        );
     }
 
     const refreshTasks = async () => {
@@ -77,10 +74,10 @@ export default function Main() {
         const taskDoc = doc(FIREBASE_DB, "instances/" + instance.id + "/tasks/" + task.id)
         const updatedTasks = tasks.map(entry => {
             if (entry.id === task.id) {
-              return { ...entry, status: status };
+                return { ...entry, status: status };
             }
             return entry;
-          });
+        });
         setTasks(updatedTasks);
         await setDoc(taskDoc, { status: status }, { merge: true });
     }
@@ -100,7 +97,7 @@ export default function Main() {
             setFilter(2);
             setFilterName("Done");
         } else if (filter === 2) {
-            setFilter (0);
+            setFilter(0);
             setFilterName("Planned");
         }
     }
@@ -108,7 +105,7 @@ export default function Main() {
     if (instance === undefined) { // instance data is loading
         return (
             <View>
-                <ActivityIndicator size={'large'}/>
+                <ActivityIndicator size={'large'} />
             </View>
         )
     } else if (instance === null) { // user is in no instance
@@ -118,26 +115,24 @@ export default function Main() {
             </View>
         )
     } else if (instance) { // instance data loaded
-        console.log(tasks);
         return (
-            <View>
-                <Button title={"Showing " + filterName + " tasks"} onPress={() => cycleFilter()}/>
-                <KeyboardAvoidingView>
+            <View style={styles.container}>
+                <Button title={"Showing " + filterName + " tasks"} onPress={() => cycleFilter()} />
                 <FlatList
+                    style={styles.list}
                     data={parseTasks()}
                     renderItem={({ item }) => <>
-                    <Text>{item.title}</Text>
-                    <Button title="Planned" onPress={() => changeTaskStatus(item, 0)} disabled={item.status === 0}/>
-                    <Button title="In progress" onPress={() => changeTaskStatus(item, 1)} disabled={item.status === 1}/>
-                    <Button title="Done" onPress={() => changeTaskStatus(item, 2)} disabled={item.status === 2}/>
-                    <Button title="Remove" onPress={() => removeTaskPrompt(item)}/>
+                        <Text>{item.title}</Text>
+                        <Button title="Planned" onPress={() => changeTaskStatus(item, 0)} disabled={item.status === 0} />
+                        <Button title="In progress" onPress={() => changeTaskStatus(item, 1)} disabled={item.status === 1} />
+                        <Button title="Done" onPress={() => changeTaskStatus(item, 2)} disabled={item.status === 2} />
+                        <Button title="Remove" onPress={() => removeTaskPrompt(item)} />
                     </>
                     }
                     onRefresh={refreshTasks}
                     refreshing={refreshing}
                 />
-                </KeyboardAvoidingView>
-                <TextInput value={newItem} placeholder="Create new item" autoCapitalize="sentences" onChangeText={(text) => setNewItem(text)}></TextInput>
+                <TextInput style={styles.input} value={newItem} placeholder="Create new item" autoCapitalize="sentences" onChangeText={(text) => setNewItem(text)}></TextInput>
                 <Button title="Add" onPress={addTask} />
             </View>
         )
@@ -149,3 +144,20 @@ export default function Main() {
         )
     }
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center'
+    },
+    list: {
+        // paddingVertical: 8
+    },
+    input: {
+        height: 50,
+        // borderWidth: 1,
+        // borderRadius: 4,
+        padding: 10,
+        backgroundColor: '#fff'
+    }
+})

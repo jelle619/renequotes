@@ -10,7 +10,6 @@ import { UserContext } from './src/contexts/UserContext';
 import { InstanceContext } from './src/contexts/InstanceContext';
 import { TasksContext } from './src/contexts/TasksContext';
 
-
 import Login from './app/screens/Login';
 import { Button, Text } from 'react-native';
 import Authenticated from './app/screens/Authenticated';

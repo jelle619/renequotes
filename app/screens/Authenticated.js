@@ -8,6 +8,9 @@ import { FIREBASE_DB } from '../../FirebaseConfig';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { InstanceContext } from '../../src/contexts/InstanceContext.js';
 
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
 import Settings from './Settings';
 import Account from './Account';
 import Main from './Main';
@@ -21,9 +24,21 @@ export default function Authenticated() {
     return (
         <NavigationContainer independent={true}>
             <Tab.Navigator initialRouteName="Main">
-                <Tab.Screen name="Account" component={Account} />
-                <Tab.Screen name="Main" component={Main} />
-                <Tab.Screen name="Settings" component={Settings} />
+                <Tab.Screen name="Account" component={Account} options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <MaterialCommunityIcons name="account" color={color} size={size} />
+                    ),
+                }} />
+                <Tab.Screen name="Tasks" component={Main} options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <MaterialCommunityIcons name="checkbox-marked" color={color} size={size} />
+                    ),
+                }} />
+                <Tab.Screen name="Settings" component={Settings} options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <MaterialIcons name="settings" color={color} size={size} />
+                    ),
+                }} />
             </Tab.Navigator>
         </NavigationContainer>
     );
