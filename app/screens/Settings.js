@@ -1,4 +1,4 @@
-import { View, Text, TextInput, Button } from 'react-native';
+import { View, Text, TextInput, Button, Share } from 'react-native';
 import React, { useState, useContext } from 'react';
 import { addDoc, setDoc, collection, doc, getDoc } from 'firebase/firestore';
 import { UserContext } from '../../src/contexts/UserContext';
@@ -45,6 +45,7 @@ export default function Settings() {
 
     return (
         <View>
+            {instance && <Button title="Invite others to instance" onPress={() => Share.share({message: instance.id})}/>}
             <Text>Join an existing instance</Text>
             <TextInput value={instanceId} placeholder="ID" autoCapitalize="none" onChangeText={(text) => setInstanceId(text)}></TextInput>
             <Button title="Join Existing Instance" onPress={joinInstance} />

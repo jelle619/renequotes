@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "App",
-    "slug": "App",
+    "slug": "cahcaw",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,10 +21,17 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.jelle619.cahcaw"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "fef5c7c5-4731-4c4b-a16f-3d66c44ac012"
+      }
+    },
+    "owner": "jelle619"
   }
 }

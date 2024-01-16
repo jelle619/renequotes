@@ -18,28 +18,6 @@ const Tab = createBottomTabNavigator();
 
 export default function Authenticated() {
 
-    const getInstance = async () => {
-        const [user, setUser] = useContext(UserContext);
-        const [instance, setInstance] = useContext(InstanceContext);
-
-        try {
-            const userDoc = await getDoc(doc(FIREBASE_DB, "users/" + user.uid));
-            const userData = await userDoc.data();
-            console.log(userData);
-            const instanceDoc = await getDoc(doc(FIREBASE_DB, "instances/" + userData.instance));
-            console.log(instanceDoc);
-            if (instanceDoc.exists()) {
-                setInstance(instanceDoc);
-            } else {
-                setInstance(null);
-            }
-        } catch (error) {
-            alert("An error occurred while retrieving instance data: " + error)
-        }
-    }
-
-    getInstance();
-
     return (
         <NavigationContainer independent={true}>
             <Tab.Navigator initialRouteName="Main">

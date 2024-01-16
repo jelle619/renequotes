@@ -1,9 +1,12 @@
 import { View, Text, Button } from 'react-native'
-import React from 'react'
+import React, { useContext } from 'react'
 import { signOut } from 'firebase/auth'
 import { FIREBASE_AUTH } from '../../FirebaseConfig'
+import { UserContext } from '../../src/contexts/UserContext'
 
 export default function Account() {
+    const [user, setUser] = useContext(UserContext);
+
     const logout = async() => {
         try {
             await signOut(FIREBASE_AUTH);
@@ -16,7 +19,7 @@ export default function Account() {
 
     return (
         <View>
-            <Text>Example</Text>
+            <Text>{"Currently logged in as: " + user.email}</Text>
             <Button title="Sign out" onPress={logout} />
         </View>
     )
