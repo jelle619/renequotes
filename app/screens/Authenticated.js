@@ -29,7 +29,7 @@ export default function Authenticated() {
                         <MaterialCommunityIcons name="account" color={color} size={size} />
                     ),
                 }} />
-                <Tab.Screen name="Tasks" component={Main} options={{
+                <Tab.Screen name="Quotes" component={Main} options={{
                     tabBarIcon: ({ color, size }) => (
                         <MaterialCommunityIcons name="checkbox-marked" color={color} size={size} />
                     ),

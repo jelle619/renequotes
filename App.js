@@ -53,7 +53,7 @@ export default function App() {
             setInstance(instanceData);
 
             var tasks = [];
-            const taskDocs = await getDocs(collection(FIREBASE_DB, "instances/" + instanceDoc.id + "/tasks"));
+            const taskDocs = await getDocs(collection(FIREBASE_DB, "instances/" + instanceDoc.id + "/quotes"));
             taskDocs.forEach((doc) => {
               const taskData = doc.data();
               taskData["id"] = doc.id;

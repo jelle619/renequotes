@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Cahcaw",
-    "slug": "cahcaw",
+    "name": "René Quotes",
+    "slug": "rene-quotes",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -29,7 +29,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "fef5c7c5-4731-4c4b-a16f-3d66c44ac012"
+        "projectId": "ba6b72a5-a69a-4b6d-8e67-88a8441b67e4"
       }
     },
     "owner": "jelle619"

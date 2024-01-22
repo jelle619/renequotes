@@ -6,26 +6,28 @@ import { FIREBASE_DB } from '../../FirebaseConfig'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { InstanceContext } from '../../src/contexts/InstanceContext'
+import { UserContext } from '../../src/contexts/UserContext';
 import { TasksContext } from '../../src/contexts/TasksContext'
 
 // It is possibly a good idea to divide up this function, the if statement is making it quite long
 export default function Main() {
     const [instance, setInstance] = useContext(InstanceContext);
+    const [user, setUser] = useContext(UserContext);
     const [tasks, setTasks] = useContext(TasksContext);
     const [newItem, setNewItem] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState(0);
-    const [filterName, setFilterName] = useState("Planned");
+    const [filterName, setFilterName] = useState("Recent");
     const [modalVisible, setModalVisible] = useState(false);
     const [modalItem, setModalItem] = useState(null);
 
     const addTask = async () => {
         if (newItem != null) {
-            setTasks(tasks.concat([{ "status": 0, "title": newItem, "date": new Date() }]))
+            setTasks(tasks.concat([{ "creator": user.uid, "upvotes": [user.uid], "downvotes": [], "status": 0, "title": newItem, "date": new Date() }]))
             setNewItem(null);
             try {
-                const document = await addDoc(collection(FIREBASE_DB, 'instances/' + instance.id + "/tasks"), { title: newItem, date: new Date(), status: 0 });
-                setTasks(tasks.concat([{ "id": document.id, "status": 0, "title": newItem, "date": new Date() }]))
+                const document = await addDoc(collection(FIREBASE_DB, 'instances/' + instance.id + "/quotes"), { "creator": user.uid, "upvotes": [user.uid], "downvotes": [], title: newItem, date: new Date(), status: 0 });
+                setTasks(tasks.concat([{ "id": document.id, "creator": user.uid, "upvotes": [user.uid], "downvotes": [], "status": 0, "title": newItem, "date": new Date() }]))
             } catch (error) {
                 alert("Task couldn't be saved to database: " + error)
             }
@@ -35,7 +37,7 @@ export default function Main() {
     }
 
     const removeTask = async (task) => {
-        const taskDoc = doc(FIREBASE_DB, "instances/" + instance.id + "/tasks/" + task.id);
+        const taskDoc = doc(FIREBASE_DB, "instances/" + instance.id + "/quotes/" + task.id);
         setTasks(tasks.filter(entry => entry.id !== task.id));
         try {
             await deleteDoc(taskDoc);
@@ -64,7 +66,7 @@ export default function Main() {
     const refreshTasks = async () => {
         setRefreshing(true);
         var tasks = [];
-        const taskDocs = await getDocs(collection(FIREBASE_DB, "instances/" + instance.id + "/tasks"));
+        const taskDocs = await getDocs(collection(FIREBASE_DB, "instances/" + instance.id + "/quotes"));
         taskDocs.forEach((doc) => {
             const taskData = doc.data();
             taskData["id"] = doc.id;
@@ -75,7 +77,7 @@ export default function Main() {
     }
 
     const changeTaskStatus = async (task, status) => {
-        const taskDoc = doc(FIREBASE_DB, "instances/" + instance.id + "/tasks/" + task.id)
+        const taskDoc = doc(FIREBASE_DB, "instances/" + instance.id + "/quotes/" + task.id)
         const updatedTasks = tasks.map(entry => {
             if (entry.id === task.id) {
                 return { ...entry, status: status };
@@ -86,23 +88,51 @@ export default function Main() {
         await setDoc(taskDoc, { status: status }, { merge: true });
     }
 
-    const parseTasks = () => {
-        var filteredTasks = tasks;
-        if (filter != null) filteredTasks = tasks.filter(entry => entry.status === filter);
-        const sortedTasks = filteredTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const parseTasks = (filter) => {
+        var sortedTasks;
+        if (filter == 0) {
+            return tasks.sort((a, b) => b.date - a.date);
+        } else if (filter == 1) {
+            return tasks.sort((a, b) => (b.upvotes.length - b.downvotes.length) - (a.upvotes.length - a.downvotes.length));
+        }
         return sortedTasks;
+    }
+
+    const upvote = async (task) => {
+        const taskDoc = doc(FIREBASE_DB, "instances/" + instance.id + "/quotes/" + task.id)
+        const upvotesArray = task.upvotes.concat([user.uid]);
+        const downvotesArray = task.downvotes.filter(id => id !== user.uid);
+        const updatedTasks = tasks.map(entry => {
+            if (entry.id === task.id) {
+                return { ...entry, upvotes: upvotesArray, downvotes: downvotesArray };
+            }
+            return entry;
+        });
+        setTasks(updatedTasks);
+        await setDoc(taskDoc, { upvotes: upvotesArray, downvotes: downvotesArray }, { merge: true });
+    }
+
+    const downvote = async (task) => {
+        const taskDoc = doc(FIREBASE_DB, "instances/" + instance.id + "/quotes/" + task.id)
+        const upvotesArray = task.upvotes.filter(id => id !== user.uid);
+        const downvotesArray = task.downvotes.concat([user.uid]);
+        const updatedTasks = tasks.map(entry => {
+            if (entry.id === task.id) {
+                return { ...entry, upvotes: upvotesArray, downvotes: downvotesArray };
+            }
+            return entry;
+        });
+        setTasks(updatedTasks);
+        await setDoc(taskDoc, { upvotes: upvotesArray, downvotes: downvotesArray }, { merge: true });
     }
 
     const cycleFilter = () => {
         if (filter === 0) {
             setFilter(1);
-            setFilterName("In progress");
+            setFilterName("Most upvoted");
         } else if (filter === 1) {
-            setFilter(2);
-            setFilterName("Done");
-        } else if (filter === 2) {
             setFilter(0);
-            setFilterName("Planned");
+            setFilterName("Recent");
         }
     }
 
@@ -121,14 +151,21 @@ export default function Main() {
     } else if (instance) { // instance data loaded
         return (
             <View style={styles.container}>
-                <Button title={"Showing " + filterName + " tasks"} onPress={() => cycleFilter()} />
+                <Button title={"Showing " + filterName + " quotes"} onPress={() => cycleFilter()} />
                 <FlatList
                     style={styles.list}
-                    data={parseTasks()}
+                    data={parseTasks(filter)}
                     renderItem={({ item }) => <>
                         <View style={styles.item}>
-                            <Text style={styles.itemText} numberOfLines={1}>{item.title}</Text>
-                            <Button title="Edit" onPress={() => { setModalItem(item); setModalVisible(true) }} />
+                            <View style={styles.itemText}>
+                                <Text style={styles.voteCounter}>{item.upvotes.length - item.downvotes.length}</Text>
+                                <Text style={styles.itemText} numberOfLines={1}>{item.title}</Text>
+                            </View>
+                            {item.creator == user.uid || instance.admins[0] == user.uid ?
+                            <Button title="Delete" color={"#D50000"} onPress={() => { removeTaskPrompt(item) }} /> :
+                            <Button title="Vote" onPress={() => { setModalItem(item); setModalVisible(true) }} />
+                            }
+                            {/* <Button title="Vote" onPress={() => { setModalItem(item); setModalVisible(true) }} /> */}
                             {/* <MaterialCommunityIcons name="checkbox-marked" color="#000000" /> */}
                         </View>
                     </>
@@ -148,10 +185,8 @@ export default function Main() {
                     <View style={styles.centeredView}>
                         <View style={styles.modalView}>
                             <Text style={styles.modalText}>{modalItem ? modalItem.title : "Item"}</Text>
-                            <Button style={styles.modalButton} title="Planned" onPress={() => { setModalVisible(!modalVisible); changeTaskStatus(modalItem, 0); }} disabled={modalItem ? modalItem.status === 0 : true} />
-                            <Button style={styles.modalButton} title="In progress" onPress={() => { setModalVisible(!modalVisible); changeTaskStatus(modalItem, 1); }} disabled={modalItem ? modalItem.status === 1 : true} />
-                            <Button style={styles.modalButton} title="Done" onPress={() => { setModalVisible(!modalVisible); changeTaskStatus(modalItem, 2) }} disabled={modalItem ? modalItem.status === 2 : true} />
-                            <Button style={styles.modalButton} color={"#D50000"} title="Remove" onPress={() => { setModalVisible(!modalVisible); removeTaskPrompt(modalItem) }} />
+                            <Button style={styles.modalButton} title="Upvote" onPress={() => { setModalVisible(!modalVisible); upvote(modalItem); }} disabled={modalItem ? modalItem.upvotes.includes(user.uid): true} />
+                            <Button style={styles.modalButton} title="Downvote" onPress={() => { setModalVisible(!modalVisible); downvote(modalItem); }} disabled={modalItem ? modalItem.downvotes.includes(user.uid) : true} />
                             <Button style={styles.modalButton} title="Close" onPress={() => setModalVisible(!modalVisible)} />
                         </View>
                     </View>
@@ -248,5 +283,16 @@ const styles = StyleSheet.create({
     },
     noInstanceText: {
         textAlign: 'center'
+    },
+    itemText: {
+        flex: 1,
+        flexDirection: "row"
+    },
+    voteCounter: {
+        borderRadius: 100,
+        backgroundColor: "black",
+        color: "white",
+        paddingHorizontal: 5,
+        marginRight: 5
     }
 })
