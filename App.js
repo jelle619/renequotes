@@ -43,24 +43,32 @@ export default function App() {
   const getInstanceAndTasks = async (user) => {
     try {
       const userDoc = await getDoc(doc(FIREBASE_DB, "users/" + user.uid));
-      const userData = await userDoc.data();
-      const instanceDoc = await getDoc(doc(FIREBASE_DB, "instances/" + userData.instance));
-      if (instanceDoc.exists()) {
-        const instanceData = await instanceDoc.data();
-        instanceData["id"] = instanceDoc.id;
-        setInstance(instanceData);
+      if (userDoc.exists()) {
+        const userData = await userDoc.data();
+        if (userDoc) {
+          const instanceDoc = await getDoc(doc(FIREBASE_DB, "instances/" + userData.instance));
+          if (instanceDoc.exists()) {
+            const instanceData = await instanceDoc.data();
+            instanceData["id"] = instanceDoc.id;
+            setInstance(instanceData);
 
-        var tasks = [];
-        const taskDocs = await getDocs(collection(FIREBASE_DB, "instances/" + instanceDoc.id + "/tasks"));
-        taskDocs.forEach((doc) => {
-          const taskData = doc.data();
-          taskData["id"] = doc.id;
-          tasks.push(taskData);
-        });
-        setTasks(tasks);
+            var tasks = [];
+            const taskDocs = await getDocs(collection(FIREBASE_DB, "instances/" + instanceDoc.id + "/tasks"));
+            taskDocs.forEach((doc) => {
+              const taskData = doc.data();
+              taskData["id"] = doc.id;
+              tasks.push(taskData);
+            });
+            setTasks(tasks);
+          } else {
+            setInstance(null);
+            setTasks([]);
+          }
+        } else {
+          setInstance(null);
+        }
       } else {
         setInstance(null);
-        setTasks([]);
       }
     } catch (error) {
       alert("An error occurred while retrieving instance and task data: " + error)

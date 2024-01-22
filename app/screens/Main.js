@@ -1,7 +1,9 @@
-import { View, Text, FlatList, TextInput, Button, Alert, KeyboardAvoidingView, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, FlatList, TextInput, Button, Alert, Modal, Pressable, KeyboardAvoidingView, StyleSheet, ActivityIndicator } from 'react-native'
 import React, { useState, useContext } from 'react'
 import { doc, setDoc, deleteDoc, getDocs, addDoc, collection } from 'firebase/firestore'
 import { FIREBASE_DB } from '../../FirebaseConfig'
+
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { InstanceContext } from '../../src/contexts/InstanceContext'
 import { TasksContext } from '../../src/contexts/TasksContext'
@@ -14,6 +16,8 @@ export default function Main() {
     const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState(0);
     const [filterName, setFilterName] = useState("Planned");
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalItem, setModalItem] = useState(null);
 
     const addTask = async () => {
         if (newItem != null) {
@@ -104,14 +108,14 @@ export default function Main() {
 
     if (instance === undefined) { // instance data is loading
         return (
-            <View>
+            <View style={styles.container}>
                 <ActivityIndicator size={'large'} />
             </View>
         )
     } else if (instance === null) { // user is in no instance
         return (
-            <View>
-                <Text>It looks like you haven't joined an instance yet. Visit the Settings to get started.</Text>
+            <View style={styles.noInstance}>
+                <Text style={styles.noInstanceText}>It looks like you haven't joined an instance yet. Visit the Settings to get started.</Text>
             </View>
         )
     } else if (instance) { // instance data loaded
@@ -122,16 +126,37 @@ export default function Main() {
                     style={styles.list}
                     data={parseTasks()}
                     renderItem={({ item }) => <>
-                        <Text>{item.title}</Text>
-                        <Button title="Planned" onPress={() => changeTaskStatus(item, 0)} disabled={item.status === 0} />
-                        <Button title="In progress" onPress={() => changeTaskStatus(item, 1)} disabled={item.status === 1} />
-                        <Button title="Done" onPress={() => changeTaskStatus(item, 2)} disabled={item.status === 2} />
-                        <Button title="Remove" onPress={() => removeTaskPrompt(item)} />
+                        <View style={styles.item}>
+                            <Text style={styles.itemText} numberOfLines={1}>{item.title}</Text>
+                            <Button title="Edit" onPress={() => { setModalItem(item); setModalVisible(true) }} />
+                            {/* <MaterialCommunityIcons name="checkbox-marked" color="#000000" /> */}
+                        </View>
                     </>
                     }
                     onRefresh={refreshTasks}
                     refreshing={refreshing}
                 />
+
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => {
+                        Alert.alert('Modal has been closed.');
+                        setModalVisible(!modalVisible);
+                    }}>
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <Text style={styles.modalText}>{modalItem ? modalItem.title : "Item"}</Text>
+                            <Button style={styles.modalButton} title="Planned" onPress={() => { setModalVisible(!modalVisible); changeTaskStatus(modalItem, 0); }} disabled={modalItem ? modalItem.status === 0 : true} />
+                            <Button style={styles.modalButton} title="In progress" onPress={() => { setModalVisible(!modalVisible); changeTaskStatus(modalItem, 1); }} disabled={modalItem ? modalItem.status === 1 : true} />
+                            <Button style={styles.modalButton} title="Done" onPress={() => { setModalVisible(!modalVisible); changeTaskStatus(modalItem, 2) }} disabled={modalItem ? modalItem.status === 2 : true} />
+                            <Button style={styles.modalButton} color={"#D50000"} title="Remove" onPress={() => { setModalVisible(!modalVisible); removeTaskPrompt(modalItem) }} />
+                            <Button style={styles.modalButton} title="Close" onPress={() => setModalVisible(!modalVisible)} />
+                        </View>
+                    </View>
+                </Modal>
+
                 <TextInput style={styles.input} value={newItem} placeholder="Create new item" autoCapitalize="sentences" onChangeText={(text) => setNewItem(text)}></TextInput>
                 <Button title="Add" onPress={addTask} />
             </View>
@@ -159,5 +184,69 @@ const styles = StyleSheet.create({
         // borderRadius: 4,
         padding: 10,
         backgroundColor: '#fff'
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 22,
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+    },
+    buttonOpen: {
+        backgroundColor: '#F194FF',
+    },
+    buttonClose: {
+        backgroundColor: '#2196F3',
+    },
+    textStyle: {
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    modalButton: {
+        flex: 1
+    },
+    item: {
+        marginTop: 5,
+        marginBottom: 5,
+        flex: 1,
+        flexDirection: "row",
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 5,
+        marginHorizontal: 5
+    },
+    itemText: {
+        flexShrink: 1,
+    },
+    noInstance: {
+        marginHorizontal: 20,
+        flex: 1,
+        justifyContent: 'center'
+    },
+    noInstanceText: {
+        textAlign: 'center'
     }
 })

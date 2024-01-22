@@ -13,12 +13,11 @@ export default function Settings() {
 
     async function joinInstance() {
         if (instanceId) {
-            const doc = await getDoc(doc(FIREBASE_DB, "instances/" + instanceId));
-            if (doc.exists()) {
-                const title = await doc.data().title;
+            const document = await getDoc(doc(FIREBASE_DB, "instances/" + instanceId));
+            if (document.exists()) {
+                const title = await document.data().title;
                 await setDoc(doc(FIREBASE_DB, 'users/' + user.uid), { instance: instanceId }, { merge: true })
                 setInstance(await getDoc(doc(FIREBASE_DB, "instances/" + instanceId)));
-                alert("Successfully joined the following instance: " + title + ".")
                 Alert.alert(
                     'Successfully joined instance',
                     'You successfully joined ' + title + ' with instance ID ' + instanceId + '.',
@@ -29,7 +28,6 @@ export default function Settings() {
                     ]
                 );
             } else {
-                alert("This instance does not seem to exist. Check for any mistakes and try again.")
                 Alert.alert(
                     'Instance does not exist',
                     'The instance ID you have entered does not seem to exist. Check for any mistakes and try again.',
